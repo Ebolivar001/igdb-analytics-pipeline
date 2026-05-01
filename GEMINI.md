@@ -1,38 +1,26 @@
-# GEMINI.md - PUBG Analytics Pipeline
+# PUBG Analytics Pipeline Documentation
 
-## Project Overview
-This project is an analytics platform for PUBG (PlayerUnknown's Battlegrounds) data. It handles telemetry extraction, player statistics, and match data using the official PUBG API, processing them via PySpark for downstream analysis.
+## 1. Data Discovery: The "Samples" Phase
 
-## Style Guide and Agent Rules
-- **Role:** Act as a Senior Data Engineer focused on the Modern Data Stack.
-- **Language:** Write comments and documentation in clear, technical English.
-- **Code Standards:** 
-    - Always use Python Type Hints.
-    - Strictly adhere to PEP 8.
-    - For Spark, use the DataFrame API exclusively (avoid RDDs unless strictly necessary).
-    - Implement robust error handling for API failures and Rate Limiting.
+### Overview
+The pipeline begins by fetching a randomized collection of recent match references from the PUBG API's `/samples` endpoint. This stage serves as the discovery mechanism for the entire system.
 
-## Common Commands
-### Installation and Setup
-- Setup environment: `pip install -r requirements.txt`
-- Export credentials: `export PUBG_API_KEY='your_key_here'`
+### Why we use Samples first:
+*   **Match ID Discovery:** The PUBG API is structured such that detailed data (Match Details and Telemetry) can only be accessed if you already possess a specific `match_id`. Since there is no global "list all matches" endpoint, the Samples endpoint provides the necessary "seeds" for data extraction.
+*   **Unbiased Data Collection:** Unlike searching for specific players (which limits data to certain skill brackets or playstyles), the Samples endpoint returns a cross-section of recent activity across an entire platform shard (e.g., Steam). This is critical for building a representative and statistically valid analytics model.
+*   **Pipeline Entry Point:** Every high-resolution data point we collect follows a strict dependency chain:
+    1.  **Samples:** Discovers the `match_id`.
+    2.  **Match Details:** Uses the ID to find the `telemetry_url`.
+    3.  **Telemetry:** Downloads the actual event-level data (player movements, damage, kills).
 
-### Pipeline Execution
-- Raw Extraction (API -> JSON): `python src/extract/pubg_api_client.py`
-- Spark Processing (Bronze -> Silver): `spark-submit src/transform/process_telemetry.py`
-- Full execution: `make run` (if Makefile exists)
+### Extraction Workflow
+1.  **Request:** Authenticate with the API and request the latest sample bundle.
+2.  **Parse:** Extract the list of Match IDs from the JSON response.
+3.  **Queue:** Pass these IDs to the next stage of the pipeline for detailed extraction.
 
-### Quality and Testing
-- Run tests: `pytest`
-- Linter: `flake8 src`
-- Type checking: `mypy src`
+---
 
-## Data Architecture (Medallion)
-- **Bronze:** Raw data in JSON/Parquet format extracted directly from the PUBG API.
-- **Silver:** Cleaned data, explicitly defined schemas, null handling, and corrected data types.
-- **Gold:** Aggregations by match, player, or season ready for Business Intelligence.
-
-## PUBG API Specific Technical Notes
-- **Rate Limits:** The API has strict limits (10 req/min for non-pro keys). Always implement `sleep` or `exponential backoff` mechanisms in extraction scripts.
-- **Telemetry:** Telemetry files are massive and provided via external URLs. Downloading and processing them in parallel with Spark is a top priority.
-- **Partitions:** Always partition data in S3/Local by `platform`, `date`, and `match_id`.
+## 2. Technical Architecture
+The project is split into two primary methodologies:
+*   **Python/Pandas (Extraction):** Used for lightweight API interaction, discovery, and initial telemetry fetching.
+*   **PySpark (Transformation/Analysis):** Used for processing the high-volume telemetry data (often 30k+ rows per match) to ensure scalability.
