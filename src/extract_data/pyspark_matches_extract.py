@@ -3,6 +3,18 @@ import requests
 import json
 from notebooks.config import api_key
 
+def extract_json_structure(payload):
+    """
+    Build a lightweight schema-like structure from nested JSON payloads.
+    """
+    if isinstance(payload, dict):
+        return {key: extract_json_structure(value) for key, value in payload.items()}
+    if isinstance(payload, list):
+        if not payload:
+            return []
+        return [extract_json_structure(payload[0])]
+    return type(payload).__name__
+
 def get_pubg_samples(api_key, shard='steam'):
     """Fetch a list of sample matches from the PUBG API."""
     url = f"https://api.pubg.com/shards/{shard}/samples"
@@ -73,7 +85,8 @@ def parse_match_data(match_json):
         'match': df_match,
         'participants': df_participants,
         'rosters': df_rosters,
-        'assets': df_assets
+        'assets': df_assets,
+        'json_structure': extract_json_structure(match_json)
     }
 
 def get_telemetry_data(telemetry_url):
@@ -93,7 +106,10 @@ def parse_telemetry_data(telemetry_json, match_id):
     df_telemetry = pd.json_normalize(telemetry_json)
     df_telemetry['match_id'] = match_id
     
-    return df_telemetry
+    return {
+        'telemetry': df_telemetry,
+        'json_structure': extract_json_structure(telemetry_json)
+    }
 
 if __name__ == "__main__":
     # Example usage
@@ -119,7 +135,8 @@ if __name__ == "__main__":
                             telemetry_json = get_telemetry_data(telemetry_url)
                             
                             if telemetry_json:
-                                df_telemetry = parse_telemetry_data(telemetry_json, match_id)
+                                telemetry_result = parse_telemetry_data(telemetry_json, match_id)
+                                df_telemetry = telemetry_result['telemetry']
                                 print(f"Telemetry events captured: {len(df_telemetry)}")
                                 
                                 # Show high-value event types (e.g., Kills)
