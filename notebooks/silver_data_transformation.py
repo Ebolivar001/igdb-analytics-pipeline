@@ -230,6 +230,31 @@ def extract_LogVehicleLeave(events_df: DataFrame) -> DataFrame:
     )
     )  
 
+def extract_LogPlayerAttack(events_df: DataFrame) -> DataFrame:
+    return (
+        events_df
+         .filter(col("_T") == "LogPlayerAttack")
+    .select(
+        col("_D").alias("ingested_at"),
+        col("attackId").alias("attack_id"),
+        col("attackType").alias("attack_type"),
+        col("fireWeaponStackCount").alias("fire_weapon_stack_count"),
+        col("attacker.name").alias("attacker_name"),
+        col("attacker.accountId").alias("attacker_account_id"),
+        col("attacker.teamId").alias("attacker_team_id"),
+        col("attacker.health").alias("attacker_health"),
+        col("attacker.location.x").alias("attacker_location_x"),
+        col("attacker.location.y").alias("attacker_location_y"),
+        col("attacker.location.z").alias("attacker_location_z"),
+        col("attacker.zone").alias("zone"),
+        col("attacker.isInVehicle").alias("attacker_is_in_vehicle"),
+        col("weapon.itemId").alias("weapon_id"),
+        col("weapon.category").alias("weapon_category"),
+        col("weapon.subCategory").alias("weapon_sub_category"),
+        col("weapon.stackCount").alias("weapon_stack_count"),
+        col("common.isGame").alias("is_game"),
+    )
+    )  
 
 if __name__ == "__main__":
     manifest = load_manifest(manifest_path)
@@ -249,6 +274,7 @@ if __name__ == "__main__":
     log_item_drop = extract_LogItemDrop(events_df)
     log_vehicle_ride = extract_LogVehicleRide(events_df)
     log_vehicle_leave = extract_LogVehicleLeave(events_df)
+    log_player_attack = extract_LogPlayerAttack(events_df)
 
     print(f"LogPlayerPosition rows: {player_positions.count()}")
     print(f"LogGameStatePeriodic rows: {game_state.count()}")
@@ -256,12 +282,14 @@ if __name__ == "__main__":
     print(f"LogItemDrop rows: {log_item_drop.count()}")
     print(f"LogVehicleRide rows: {log_vehicle_ride.count()}")
     print(f"LogVehicleLeave rows: {log_vehicle_leave.count()}")
-
+    print(f"LogPlayerAttack rows: {log_player_attack.count()}")
     print("Uploading silver datasets to Azure...")
+
     save_and_upload_silver_df(player_positions, manifest, "player_positions")
     save_and_upload_silver_df(game_state, manifest, "game_state")
     save_and_upload_silver_df(log_item_pickup, manifest, "log_item_pickup")
     save_and_upload_silver_df(log_item_drop, manifest, "log_item_drop")
     save_and_upload_silver_df(log_vehicle_ride, manifest, "log_vehicle_ride")
     save_and_upload_silver_df(log_vehicle_leave, manifest, "log_vehicle_leave")
+    save_and_upload_silver_df(log_player_attack, manifest, "log_player_attack")
     spark.stop()
