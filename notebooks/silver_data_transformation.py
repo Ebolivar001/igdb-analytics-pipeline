@@ -227,7 +227,7 @@ def extract_LogVehicleLeave(events_df: DataFrame) -> DataFrame:
         col("vehicle.location.x").alias("vehicle_location_x"),
         col("vehicle.location.y").alias("vehicle_location_y"),
         col("vehicle.location.z").alias("vehicle_location_z"),
-    )
+   )
     )  
 
 def extract_LogPlayerAttack(events_df: DataFrame) -> DataFrame:
@@ -253,8 +253,42 @@ def extract_LogPlayerAttack(events_df: DataFrame) -> DataFrame:
         col("weapon.subCategory").alias("weapon_sub_category"),
         col("weapon.stackCount").alias("weapon_stack_count"),
         col("common.isGame").alias("is_game"),
-    )
+  )
     )  
+
+
+
+def extract_LogPlayerTakeDamage(events_df: DataFrame) -> DataFrame:
+    return (
+        events_df
+         .filter(col("_T") == "LogPlayerTakeDamage")
+    .select(
+    col("_D").alias("ingested_at"),
+    col("attackId").alias("attack_id"),
+    col("attacker.name").alias("attacker_name"),
+    col("attacker.accountId").alias("attacker_account_id"),
+    col("attacker.teamId").alias("attacker_team_id"),
+    col("attacker.health").alias("attacker_health"),
+    col("attacker.location.x").alias("attacker_location_x"),
+    col("attacker.location.y").alias("attacker_location_y"),
+    col("attacker.location.z").alias("attacker_location_z"),
+    col("attacker.zone").alias("attacker_zone"),
+    col("victim.name").alias("victim_name"),
+    col("victim.accountId").alias("victim_account_id"),
+    col("victim.teamId").alias("victim_team_id"),
+    col("victim.health").alias("victim_health"),
+    col("victim.location.x").alias("victim_location_x"),
+    col("victim.location.y").alias("victim_location_y"),
+    col("victim.location.z").alias("victim_location_z"),
+    col("victim.zone").alias("victim_zone"),
+    col("damageTypeCategory").alias("damage_type_category"),
+    col("damageReason").alias("damage_reason"),
+    col("damage").alias("damage"),
+    col("damageCauserName").alias("damage_causer_name"),
+    col("isThroughPenetrableWall").alias("is_through_penetrable_wall"),
+    col("common.isGame").alias("is_game"),
+  )
+    ) 
 
 if __name__ == "__main__":
     manifest = load_manifest(manifest_path)
@@ -275,6 +309,7 @@ if __name__ == "__main__":
     log_vehicle_ride = extract_LogVehicleRide(events_df)
     log_vehicle_leave = extract_LogVehicleLeave(events_df)
     log_player_attack = extract_LogPlayerAttack(events_df)
+    log_player_take_damage = extract_LogPlayerTakeDamage(events_df)
 
     print(f"LogPlayerPosition rows: {player_positions.count()}")
     print(f"LogGameStatePeriodic rows: {game_state.count()}")
@@ -283,6 +318,7 @@ if __name__ == "__main__":
     print(f"LogVehicleRide rows: {log_vehicle_ride.count()}")
     print(f"LogVehicleLeave rows: {log_vehicle_leave.count()}")
     print(f"LogPlayerAttack rows: {log_player_attack.count()}")
+    print(f"LogPlayerTakeDamage rows: {log_player_take_damage.count()}")
     print("Uploading silver datasets to Azure...")
 
     save_and_upload_silver_df(player_positions, manifest, "player_positions")
@@ -292,4 +328,5 @@ if __name__ == "__main__":
     save_and_upload_silver_df(log_vehicle_ride, manifest, "log_vehicle_ride")
     save_and_upload_silver_df(log_vehicle_leave, manifest, "log_vehicle_leave")
     save_and_upload_silver_df(log_player_attack, manifest, "log_player_attack")
+    save_and_upload_silver_df(log_player_take_damage, manifest, "log_player_take_damage")
     spark.stop()
