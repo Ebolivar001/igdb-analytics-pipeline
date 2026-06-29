@@ -151,7 +151,7 @@ def extract_LogItemPickup(events_df: DataFrame) -> DataFrame:
 def extract_LogItemDrop(events_df: DataFrame) -> DataFrame:
     return (
         events_df
-        .filter(col("_T") == "LogItemDrop")
+         .filter(col("_T") == "LogItemDrop")
         .select(
             col("_D").alias("ingested_at"),
             col("character.name").alias("character_name"),
@@ -161,7 +161,74 @@ def extract_LogItemDrop(events_df: DataFrame) -> DataFrame:
             col("character.zone").alias("zone"),
             col("item.category").alias("category")
         )
-    )   
+    )  
+
+
+def extract_LogVehicleRide(events_df: DataFrame) -> DataFrame:
+    return (
+        events_df
+         .filter(col("_T") == "LogVehicleRide")
+   .select(
+            col("_D").alias("ingested_at"),
+            col("character.name").alias("character_name"),
+            col("character.accountId").alias("account_id"),
+            col("character.teamId").alias("team_id"),
+            col("character.health").alias("character_health"),
+            col("character.location.x").alias("character_location_x"),
+            col("character.location.y").alias("character_location_y"),
+            col("character.location.z").alias("character_location_z"),
+            col("character.zone").alias("zone"),
+            col("seatIndex").alias("seat_index"),
+            col("vehicle.vehicleType").alias("vehicle_type"),
+            col("vehicle.vehicleId").alias("vehicle_id"),
+            col("vehicle.seatIndex").alias("vehicle_seat_index"),
+            col("vehicle.healthPercent").alias("vehicle_health_percent"),
+            col("vehicle.feulPercent").alias("vehicle_fuel_percent"),
+            col("vehicle.altitudeAbs").alias("vehicle_altitude_abs"),
+            col("vehicle.altitudeRel").alias("vehicle_altitude_rel"),
+            col("vehicle.velocity").alias("vehicle_velocity"),
+            col("vehicle.isEngineOn").alias("is_engine_on"),
+            col("vehicle.isInWaterVolume").alias("is_in_water_volume"),
+            col("vehicle.isWheelsInAir").alias("is_wheels_in_air"),
+            col("vehicle.location.x").alias("vehicle_location_x"),
+            col("vehicle.location.y").alias("vehicle_location_y"),
+            col("vehicle.location.z").alias("vehicle_location_z"),
+        )
+    )  
+
+def extract_LogVehicleLeave(events_df: DataFrame) -> DataFrame:
+    return (
+        events_df
+         .filter(col("_T") == "LogVehicleLeave")
+    .select(
+        col("_D").alias("ingested_at"),
+        col("character.name").alias("character_name"),
+        col("character.accountId").alias("account_id"),
+        col("character.teamId").alias("team_id"),
+        col("character.health").alias("character_health"),
+        col("character.location.x").alias("character_location_x"),
+        col("character.location.y").alias("character_location_y"),
+        col("character.location.z").alias("character_location_z"),
+        col("character.zone").alias("zone"),
+        col("seatIndex").alias("seat_index"),
+        col("rideDistance").alias("ride_distance"),
+        col("maxSpeed").alias("max_speed"),
+        col("vehicle.vehicleType").alias("vehicle_type"),
+        col("vehicle.vehicleId").alias("vehicle_id"),
+        col("vehicle.seatIndex").alias("vehicle_seat_index"),
+        col("vehicle.healthPercent").alias("vehicle_health_percent"),
+        col("vehicle.feulPercent").alias("vehicle_fuel_percent"),
+        col("vehicle.altitudeAbs").alias("vehicle_altitude_abs"),
+        col("vehicle.altitudeRel").alias("vehicle_altitude_rel"),
+        col("vehicle.velocity").alias("vehicle_velocity"),
+        col("vehicle.isEngineOn").alias("is_engine_on"),
+        col("vehicle.isInWaterVolume").alias("is_in_water_volume"),
+        col("vehicle.isWheelsInAir").alias("is_wheels_in_air"),
+        col("vehicle.location.x").alias("vehicle_location_x"),
+        col("vehicle.location.y").alias("vehicle_location_y"),
+        col("vehicle.location.z").alias("vehicle_location_z"),
+    )
+    )  
 
 
 if __name__ == "__main__":
@@ -180,15 +247,21 @@ if __name__ == "__main__":
     game_state = extract_game_state(events_df)
     log_item_pickup = extract_LogItemPickup(events_df)
     log_item_drop = extract_LogItemDrop(events_df)
+    log_vehicle_ride = extract_LogVehicleRide(events_df)
+    log_vehicle_leave = extract_LogVehicleLeave(events_df)
 
     print(f"LogPlayerPosition rows: {player_positions.count()}")
     print(f"LogGameStatePeriodic rows: {game_state.count()}")
     print(f"LogItemPickup rows: {log_item_pickup.count()}")
     print(f"LogItemDrop rows: {log_item_drop.count()}")
+    print(f"LogVehicleRide rows: {log_vehicle_ride.count()}")
+    print(f"LogVehicleLeave rows: {log_vehicle_leave.count()}")
 
     print("Uploading silver datasets to Azure...")
     save_and_upload_silver_df(player_positions, manifest, "player_positions")
     save_and_upload_silver_df(game_state, manifest, "game_state")
     save_and_upload_silver_df(log_item_pickup, manifest, "log_item_pickup")
     save_and_upload_silver_df(log_item_drop, manifest, "log_item_drop")
+    save_and_upload_silver_df(log_vehicle_ride, manifest, "log_vehicle_ride")
+    save_and_upload_silver_df(log_vehicle_leave, manifest, "log_vehicle_leave")
     spark.stop()
