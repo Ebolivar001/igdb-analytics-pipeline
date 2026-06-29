@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS {full_table_name} (
+    match_id TEXT,
+    ingest_date TEXT,
+    ingested_at TIMESTAMPTZ,
+    attack_id BIGINT,
+    attack_type TEXT,
+    fire_weapon_stack_count INTEGER,
+    attacker_name TEXT,
+    attacker_account_id TEXT,
+    attacker_team_id INTEGER,
+    attacker_health DOUBLE PRECISION,
+    attacker_location_x DOUBLE PRECISION,
+    attacker_location_y DOUBLE PRECISION,
+    attacker_location_z DOUBLE PRECISION,
+    zone TEXT,
+    attacker_is_in_vehicle BOOLEAN,
+    weapon_id TEXT,
+    weapon_category TEXT,
+    weapon_sub_category TEXT,
+    weapon_stack_count INTEGER,
+    is_game DOUBLE PRECISION
+);
